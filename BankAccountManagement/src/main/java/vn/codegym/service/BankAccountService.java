@@ -181,16 +181,21 @@ public class BankAccountService {
                 // User pressed Enter, return to menu
                 return;
             }
-            Optional<BankAccount> opt = accounts.stream()
-                    .filter(acc -> acc.getCode().equals(code))
-                    .findFirst();
+            BankAccount foundAccount = null;
+            for (int i = 0; i < accounts.size(); i++) {
+                BankAccount acc = accounts.get(i);
+                if (acc.getCode().equals(code)) {
+                    foundAccount = acc;
+                    break;
+                }
+            }
 
-            if (opt.isPresent()) {
+            if (foundAccount != null) {
                 while (true) {
                     System.out.print("Bạn có chắc muốn xóa không? (Yes/No): ");
                     String confirm = scanner.nextLine().trim();
                     if (confirm.equalsIgnoreCase("Yes")) {
-                        accounts.remove(opt.get());
+                        accounts.remove(foundAccount);
                         CSVUtils.writeAll(FILE_PATH, accounts);
                         System.out.println("✅ Đã xóa tài khoản.");
                         System.out.println("Cập nhật danh sách");
@@ -216,16 +221,26 @@ public class BankAccountService {
 
     public void showAccounts() {
         List<BankAccount> accounts = readAccounts();
-        accounts.forEach(System.out::println);
+        for (int i = 0; i < accounts.size(); i++) {
+            System.out.println(accounts.get(i));
+        }
     }
 
     public void searchAccount(Scanner scanner) {
         List<BankAccount> accounts = readAccounts();
         System.out.print("Nhập từ khóa (mã hoặc tên): ");
         String keyword = scanner.nextLine().toLowerCase();
-        accounts.stream()
-                .filter(a -> a.getCode().contains(keyword) || a.toString().toLowerCase().contains(keyword))
-                .forEach(System.out::println);
+        boolean found = false;
+        for (int i = 0; i < accounts.size(); i++) {
+            BankAccount a = accounts.get(i);
+            if (a.getCode().contains(keyword) || a.toString().toLowerCase().contains(keyword)) {
+                System.out.println(a);
+                found = true;
+            }
+        }
+        if (!found) {
+            System.out.println("Không tìm thấy tài khoản phù hợp.");
+        }
     }
 
     private List<BankAccount> readAccounts() {
@@ -234,7 +249,8 @@ public class BankAccountService {
 
         List<String> lines = CSVUtils.readAll(FILE_PATH);
         List<BankAccount> accounts = new ArrayList<>();
-        for (String line : lines) {
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
             String[] parts = line.split(",");
             if (parts.length == 8) {
                 accounts.add(new SavingAccount(
